@@ -1,23 +1,23 @@
 import streamlit as st
+import re
 
 # 페이지 기본 설정
 st.set_page_config(
-    page_title="중고거래 소액사기 위험도 진단기",
-    page_icon="🚨",
+    page_title="중고거래 대화 기반 사기 위험도 진단기",
+    page_icon="💬",
     layout="centered"
 )
 
-# 타이틀 및 안내
-st.title("🚨 중고거래 소액사기 위험도 진단기")
+st.title("💬 중고거래 대화 내용 기반 사기 진단기")
 st.markdown("""
-거래하려는 **품목의 가격**과 **본인의 소액거래 경험 횟수**, 그리고 **거래 상황**을 입력하여 사기 위험도를 미리 체크해보세요!
+상대방과 주고받은 **대화 내용(텍스트)**과 **거래 정보**를 입력해 보세요.  
+AI 키워드 분석 로직이 대화 속 사기범들의 전형적인 멘트 패턴을 감지하여 위험도를 분석해 드립니다!
 """)
 
 st.divider()
 
-# 사용자 입력 섹션
-st.header("1. 기본 정보 입력")
-
+# 1. 기본 정보 입력
+st.header("1. 거래 기본 정보")
 col1, col2 = st.columns(2)
 
 with col1:
@@ -26,7 +26,7 @@ with col1:
         min_value=0,
         value=50000,
         step=5000,
-        help="구매하려는 물품의 거래 가격을 입력하세요."
+        help="구매하려는 물품의 가격을 입력하세요."
     )
 
 with col2:
@@ -35,84 +35,115 @@ with col2:
         min_value=0,
         value=3,
         step=1,
-        help="최근 1~2년간 중고거래를 진행해 본 횟수를 입력하세요."
+        help="중고거래 경험이 적을수록 경각심 가이드를 강화해 드립니다."
     )
 
-st.header("2. 거래 정황 체크리스트 (해당 사항 선택)")
-
-# 위험 패턴 체크박스
-check_messenger = st.checkbox("상대방이 앱 내부 채팅이 아닌 외부 메신저(카카오톡, 오픈채팅 등)로 이동을 요청하나요?")
-check_link = st.checkbox("상대방이 직접 안전결제/네이버페이 등의 URL 링크를 보내왔나요?")
-check_urgency = st.checkbox("다른 구매자가 있다며 '지금 즉시 입금'을 독촉하거나 급매를 강조하나요?")
-check_non_face = st.checkbox("직거래를 거부하거나, '선입금 후 문 앞 수령/비대면'을 고집하나요?")
-check_cheap = st.checkbox("해당 물품이 시세보다 현저히 저렴하게 나왔나요?")
-
-# 위험도 계산 로직
-risk_score = 0
-
-# 1. 가격 요인 (소액사기 고위험 구간: 1만 원 ~ 15만 원)
-if 10000 <= price <= 150000:
-    risk_score += 20
-elif 150000 < price <= 300000:
-    risk_score += 10
-
-# 2. 거래 경험 요인 (경험이 적을수록 사기 노출 위험 증가)
-if trade_count == 0:
-    risk_score += 15
-elif trade_count <= 2:
-    risk_score += 10
-elif trade_count <= 5:
-    risk_score += 5
-
-# 3. 정황 체크리스트 요인 (가장 강력한 위험 신호)
-if check_link:
-    risk_score += 45  # 가짜 안전결제 링크는 거의 100% 사기
-if check_messenger:
-    risk_score += 20
-if check_urgency:
-    risk_score += 15
-if check_non_face:
-    risk_score += 15
-if check_cheap:
-    risk_score += 10
-
-# 점수 캡핑 (최대 100점)
-risk_score = min(risk_score, 100)
+# 2. 대화 내용 입력
+st.header("2. 상대방과의 대화 내용 입력")
+user_chat = st.text_area(
+    "카톡, 문자, 당근챗 등에서 상대방과 주고받은 대화를 복사해서 붙여넣으세요:",
+    height=200,
+    placeholder="예시:\n- 앱 알림이 안 와서 카톡으로 문의주세요 ID: abc1234\n- 지금 바로 입금하시면 편의점 택배로 송장 바로 뽑아드릴게요.\n- 안전거래 링크 보내드릴 테니 접속해서 결제하시면 됩니다."
+)
 
 st.divider()
 
-# 결과 출력 섹션
-st.header("3. 진단 결과")
+# 3. 진단 버튼 및 분석 로직
+st.header("3. 분석 결과")
 
-if st.button("위험도 진단하기", type="primary", use_container_width=True):
-    st.subheader(f"위험도 점수: **{risk_score}점 / 100점**")
-    st.progress(risk_score / 100)
-
-    # 위험도 단계 분기
-    if risk_score >= 70:
-        st.error("🚨 **[위험등급: 매우 위험] 거래를 즉시 중단하세요!**")
-        st.markdown("""
-        * **분석:** 사기범들이 사용하는 전형적인 고위험 패턴이 다수 감지되었습니다.
-        * **경고:** 특히 **외부 링크(URL)를 통한 결제 요구**나 **외부 메신저 이동 유도**는 99% 이상 사기 수법입니다. 절대로 입금하거나 링크에 계정 정보를 입력하지 마세요.
-        """)
-    elif risk_score >= 40:
-        st.warning("⚠️ **[위험등급: 주의] 신중한 확인이 필요합니다.**")
-        st.markdown("""
-        * **분석:** 소액사기 위험 요소가 포함되어 있습니다.
-        * **경고:** 소액 거래(1~10만 원)는 경찰 신고나 추적이 어렵다는 점을 악용하는 경우가 많습니다. 입금 전 **더치트**나 **사이버캅**을 통해 상대방 연락처/계좌를 반드시 조회하세요.
-        """)
+if st.button("대화 분석 및 위험도 진단하기", type="primary", use_container_width=True):
+    if not user_chat.strip():
+        st.warning("⚠️ 분석할 대화 내용을 입력해 주세요.")
     else:
-        st.success("✅ **[위험등급: 비교적 안전] 기본 수칙을 준수하며 거래하세요.**")
-        st.markdown("""
-        * **분석:** 현재까지는 전형적인 사기 패턴이 크게 눈에 띄지 않습니다.
-        * **경고:** 다만, 방심은 금물입니다. 반드시 중고거래 플랫폼 내부 결제/채팅 시스템을 이용하시고, 택배 거래 시 선입금에 유의하세요.
-        """)
+        risk_score = 0
+        detected_patterns = []
 
-    # 종합 예방 팁
-    with st.expander("💡 소액 사기 예방 4대 철칙 보기"):
-        st.write("""
-        1. **플랫폼 이탈 금지:** 당근, 중고나라, 번개장터 등의 자체 채팅망만 이용하세요.
-        2. **외부 링크 접속 절대 금지:** 상대방이 보낸 '안전결제 링크'는 피싱 사이트입니다.
-        3. **사기 이력 조회:** 입금 전 [더치트(The Cheat)] 앱에서 계좌번호/전화번호를 검색하세요.
-        4. **시세보다 너무 싸면 의심:** 미개봉 신품이나 인기도서/상품권을 시세의 반값에 파는 거래는 유의하세요.
-        """)
+        # --- 사기 패턴 키워드 정규식 규칙 정의 ---
+        
+        # 1. 외부 메신저 유도 패턴
+        pattern_messenger = re.compile(
+            r"(카톡|카카오톡|오픈채팅|오픈톡|문자|라인|텔레그램|알림이\s*안|앱이\s*이상|아이디|ID|톡주|톡으로)",
+            re.IGNORECASE
+        )
+        # 2. 가짜 안전결제 및 링크 유도 패턴
+        pattern_link = re.compile(
+            r"(안전결제|안전거래|네이버페이|중고나라페이|링크|URL|http|https|사이트|페이지|수수료|오류|재입금|환불)",
+            re.IGNORECASE
+        )
+        # 3. 시간 압박 및 입금 독촉 패턴
+        pattern_urgency = re.compile(
+            r"(지금\s*바로|즉시|다른\s*분|먼저\s*입금|급매|오늘만|택배\s*붙이|택배\s*보내|송장|편의점)",
+            re.IGNORECASE
+        )
+        # 4. 회피형 직거래 핑계 및 비대면 선입금 패턴
+        pattern_non_face = re.compile(
+            r"(출장|지방|근무|비대면|문\s*앞|현관|비밀번호|동호수|대신|선입금)",
+            re.IGNORECASE
+        )
+
+        # --- 대화 내용 분석 ---
+        if pattern_link.search(user_chat):
+            risk_score += 45
+            detected_patterns.append("🔗 **외부 링크/안전결제 접속 유도** (가짜 피싱 사이트 가능성 극히 높음)")
+
+        if pattern_messenger.search(user_chat):
+            risk_score += 25
+            detected_patterns.append("📲 **외부 메신저(카카오톡/오픈채팅 등) 이동 유도**")
+
+        if pattern_urgency.search(user_chat):
+            risk_score += 15
+            detected_patterns.append("⏰ **즉시 입금 독촉 및 상황 급박 연출** (택배 즉시 발송, 타 구매자 대기 등)")
+
+        if pattern_non_face.search(user_chat):
+            risk_score += 15
+            detected_patterns.append("🚪 **직거래 회피 또는 선입금 후 비대면 수령 조건 요구**")
+
+        # --- 가공 조건 반영 (가격 및 거래 경험) ---
+        if 10000 <= price <= 150000:
+            risk_score += 10  # 소액사기 다발 구간
+
+        if trade_count <= 1:
+            risk_score += 5  # 초보자 가산점
+
+        # 점수 캡핑 (최대 100점)
+        risk_score = min(risk_score, 100)
+
+        # --- 결과 출력 ---
+        st.subheader(f"위험도 점수: **{risk_score}점 / 100점**")
+        st.progress(risk_score / 100)
+
+        # 감지된 패턴 표시
+        if detected_patterns:
+            st.markdown("### 🔍 대화 속에서 감지된 사기 의심 패턴:")
+            for pattern in detected_patterns:
+                st.write(f"- {pattern}")
+            st.write("")
+
+        # 위험도 단계별 가이드
+        if risk_score >= 65:
+            st.error("🚨 **[위험등급: 매우 위험] 거래를 즉시 중단하세요!**")
+            st.markdown("""
+            * **분석:** 전형적인 중고거래 사기범들의 대화 패턴이 대거 감지되었습니다.
+            * **주의사항:** 특히 외부 링크를 통한 안전결제 요구나 카카오톡 등 외부 메신저로 대화를 유도하는 행위는 99% 이상 사기 수법입니다. 절대로 입금하지 마세요.
+            """)
+        elif risk_score >= 35:
+            st.warning("⚠️ **[위험등급: 주의] 신중한 확인이 필요합니다.**")
+            st.markdown("""
+            * **분석:** 대화 내용 중 사기 의심 키워드가 일부 포함되어 있습니다.
+            * **주의사항:** 입금 전 반드시 **더치트**나 **경찰청 사이버캅**에서 상대방 계좌/전화번호를 검색해 보세요.
+            """)
+        else:
+            st.success("✅ **[위험등급: 비교적 안전] 기본 거래 수칙을 준수하세요.**")
+            st.markdown("""
+            * **분석:** 전형적인 사기 대화 패턴이 뚜렷하게 감지되지 않았습니다.
+            * **주의사항:** 다만 대화 외적인 정황이 있을 수 있으니, 항상 앱 내부 채팅망과 정식 거래 시스템만 이용해 주세요.
+            """)
+
+        # 종합 예방 팁
+        with st.expander("💡 소액 사기 예방 필수 체크리스트"):
+            st.write("""
+            1. **플랫폼 내부 채팅만 이용:** 카톡 ID나 오픈채팅 이동 요구는 거절하세요.
+            2. **메시지로 받은 URL 링크 클릭 금지:** 네이버페이/중고나라 안전결제 링크는 100% 피싱입니다.
+            3. **계좌 조회 필수:** 입금 전 더치트(The Cheat) 앱에서 사기 이력을 조회하세요.
+            4. **선입금 비대면 직거래 금지:** "문 앞에 뒀으니 입금하라"는 식의 거래는 응하지 마세요.
+            """)
