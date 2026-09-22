@@ -13,29 +13,29 @@ st.set_page_config(
 def sanitize_text(text):
     return text.replace('\xa0', ' ').strip()
 
-# 사이드바: 모드 선택 (구매자 / 판매자)
+# 사이드바: 모드 선택 (판매자 / 구매자)
 st.sidebar.title("👥 역할 선택")
 mode = st.sidebar.radio(
     "본인의 거래 역할을 선택하세요:",
-    ["🛒 구매자 시점 (내가 물건을 살 때)", "🏷️ 판매자 시점 (내가 물건을 팔 때)"],
+    ["🏷️ 판매자 시점 (내가 물건을 팔 때)", "🛒 구매자 시점 (내가 물건을 살 때)"],
     index=0
 )
 
 st.sidebar.divider()
 st.sidebar.info("""
 💡 **역할별 진단 안내**
-* **구매자 시점**: 판매자가 제시하는 거래 조건/대화(외부 링크, 카톡 유도 등)를 분석하여 판매자의 사기 위험도를 진단합니다.
-* **판매자 시점**: 가상 구매자가 제시하는 소액 상품 거래 요청 및 대화(선송장 요구, 외부 채널 유도 등)를 분석하여 구매자의 사기 가능성을 모의 진단합니다.
+* **판매자 시점**: 구매하려는 상대방이 보낸 대화 내용(선송장 요구, 외부 메신저 유도 등)을 입력하여 구매자의 사기 위험도를 진단합니다.
+* **구매자 시점**: 가상 판매자가 제시하는 조건과 대화(가짜 안전결제 링크, 외부 채널 이동 등)를 통해 판매자의 사기 가능성을 모의 진단합니다.
 """)
 
 # ==============================================================================
-# 1. 구매자 시점 (사용자가 구매자 - 상대방 판매자의 대화 검증)
+# 1. 판매자 시점 (내가 물건을 팔 때 - 상대방 구매자의 대화 분석)
 # ==============================================================================
-if mode == "🛒 구매자 시점 (내가 물건을 살 때)":
-    st.title("🛒 구매자용: 판매자 사기 위험도 진단기")
+if mode == "🏷️ 판매자 시점 (내가 물건을 팔 때)":
+    st.title("🏷️ 판매자용: 구매자 사기 위험도 진단기")
     st.markdown("""
-    구매하려는 물품의 정보와 **판매자(상대방)**가 보낸 대화 내용을 입력하세요.  
-    판매자들의 전형적인 피싱/사기 패턴(가짜 안전결제 링크, 외부 메신저 유도 등)을 감지해 드립니다!
+    판매하려는 물품의 정보와 **구매자(상대방)**가 보낸 대화 내용을 입력하세요.  
+    구매자들의 전형적인 사기 패턴(입금 전 송장 우선 발송 요구, 외부 메신저 이동 유도 등)을 감지해 드립니다!
     """)
 
     st.divider()
@@ -46,11 +46,11 @@ if mode == "🛒 구매자 시점 (내가 물건을 살 때)":
 
     with col1:
         price = st.number_input(
-            "구매하려는 물품 가격 (원)",
+            "판매하려는 물품 가격 (원)",
             min_value=0,
             value=50000,
             step=5000,
-            help="구매하려는 물품의 가격을 입력하세요."
+            help="판매하려는 물품의 가격을 입력하세요."
         )
 
     with col2:
@@ -63,39 +63,39 @@ if mode == "🛒 구매자 시점 (내가 물건을 살 때)":
         )
 
     # 2. 대화 내용 입력 및 샘플 테스트
-    st.header("2. 판매자와 주고받은 대화 내용")
+    st.header("2. 구매자와 주고받은 대화 내용")
 
-    if "buyer_chat_text" not in st.session_state:
-        st.session_state["buyer_chat_text"] = ""
+    if "seller_chat_text" not in st.session_state:
+        st.session_state["seller_chat_text"] = ""
 
-    st.write("💡 **테스트용 샘플 판매자 대화 불러오기:**")
+    st.write("💡 **테스트용 샘플 구매자 대화 불러오기:**")
     sample_col1, sample_col2, sample_col3 = st.columns(3)
 
     with sample_col1:
-        if st.button("🚨 가짜 안전결제 피싱", use_container_width=True):
-            st.session_state["buyer_chat_text"] = "안녕하세요. 물건 지방이라 택배거래만 됩니다. 제가 네이버페이 안전결제 생성해서 링크 보내드릴 테니 접속하셔서 결제 진행해 주세요. http://naverpay-safety.com"
+        if st.button("🚨 송장 선발송 요구", use_container_width=True):
+            st.session_state["seller_chat_text"] = "지금 바로 입금할 테니 편의점 택배 송장 먼저 뽑아서 사진 보내주세요. 송장 확인되는 대로 바로 입금해 드릴게요!"
 
     with sample_col2:
         if st.button("📲 외부 메신저 유도", use_container_width=True):
-            st.session_state["buyer_chat_text"] = "앱 알림이 잘 안 와서 그러는데 카톡으로 문의주세요. 카톡 ID: scammer123 입니다. 오시면 사진 더 보내드릴게요."
+            st.session_state["seller_chat_text"] = "앱 알림이 잘 안 와서 그러는데 카톡으로 거래 진행해 주세요. 카톡 ID: buyer123 입니다."
 
     with sample_col3:
-        if st.button("✅ 정상 판매자 예시", use_container_width=True):
-            st.session_state["buyer_chat_text"] = "안녕하세요! 거래 가능합니다. 내일 오후 3시에 강남역 4번 출구 쪽에서 직거래 가능할까요? 물건 직접 확인하시고 입금해주세요."
+        if st.button("✅ 정상 구매자 예시", use_container_width=True):
+            st.session_state["seller_chat_text"] = "안녕하세요! 거래 가능할까요? 내일 오후 3시에 강남역 4번 출구 쪽에서 직거래 가능할까요? 현장에서 직접 확인하고 입금드릴게요."
 
     user_chat = st.text_area(
-        "판매자가 보낸 메시지를 복사해서 붙여넣으세요:",
-        value=st.session_state["buyer_chat_text"],
+        "구매자가 보낸 메시지를 복사해서 붙여넣으세요:",
+        value=st.session_state["seller_chat_text"],
         height=180,
-        placeholder="예시:\n- 앱 알림이 안 와서 카톡으로 문의주세요 ID: abc1234\n- 안전거래 링크 보내드릴 테니 접속해서 결제하시면 됩니다."
+        placeholder="예시:\n- 지금 바로 입금할 테니 편의점 택배 송장 먼저 보내주세요.\n- 앱 알림이 안 와서 카톡으로 문의주세요 ID: abc1234"
     )
 
     st.divider()
 
     # 3. 진단 버튼 및 분석 로직
-    st.header("3. 판매자 사기 위험도 진단 결과")
+    st.header("3. 구매자 사기 위험도 진단 결과")
 
-    if st.button("판매자 대화 분석 및 위험도 진단하기", type="primary", use_container_width=True):
+    if st.button("구매자 대화 분석 및 위험도 진단하기", type="primary", use_container_width=True):
         clean_chat = sanitize_text(user_chat)
         if not clean_chat:
             st.warning("⚠️ 분석할 대화 내용을 입력해 주세요.")
@@ -103,27 +103,26 @@ if mode == "🛒 구매자 시점 (내가 물건을 살 때)":
             risk_score = 0
             detected_patterns = []
 
-            # 패턴 정의
-            pattern_messenger = re.compile(r"(카톡|카카오톡|오픈채팅|오픈톡|문자|라인|텔레그램|알림이\s*안|앱이\s*이상|아이디|ID|톡주|톡으로)", re.IGNORECASE)
-            pattern_link = re.compile(r"(안전결제|안전거래|네이버페이|중고나라페이|링크|URL|http|https|사이트|페이지|수수료|오류|재입금|환불)", re.IGNORECASE)
-            pattern_urgency = re.compile(r"(지금\s*바로|즉시|다른\s*분|먼저\s*입금|급매|오늘만|택배\s*붙이|택배\s*보내|송장|편의점)", re.IGNORECASE)
-            pattern_non_face = re.compile(r"(출장|지방|근무|비대면|문\s*앞|현관|비밀번호|동호수|대신|선입금)", re.IGNORECASE)
+            pattern_urgency = re.compile(r"(송장|편의점|선발송|택배\s*먼저|보내주시면|사진\0s*보내)", re.IGNORECASE)
+            pattern_messenger = re.compile(r"(카톡|카카오톡|오픈채팅|오픈톡|문자|라인|텔레그램|알림이\s*안|아이디|ID|톡주)", re.IGNORECASE)
+            pattern_link = re.compile(r"(안전결제|안전거래|네이버페이|링크|URL|http|https)", re.IGNORECASE)
+            pattern_non_face = re.compile(r"(출장|지방|근무|비대면|문\s*앞|현관|선입금)", re.IGNORECASE)
 
-            if pattern_link.search(clean_chat):
+            if pattern_urgency.search(clean_chat):
                 risk_score += 45
-                detected_patterns.append("🔗 **외부 웹 피싱/가짜 안전결제 링크 유도** (100% 사기 위험)")
+                detected_patterns.append("📦 **입금 전 송장 우선 발송 요구** (소액/중고거래 전형적 먹튀 패턴)")
 
             if pattern_messenger.search(clean_chat):
                 risk_score += 25
                 detected_patterns.append("📲 **앱 외부 메신저(카카오톡/오픈채팅 등) 이동 유도**")
 
-            if pattern_urgency.search(clean_chat):
-                risk_score += 15
-                detected_patterns.append("⏰ **즉시 입금 독촉 및 타 구매자 대기 상황 연출**")
+            if pattern_link.search(clean_chat):
+                risk_score += 20
+                detected_patterns.append("🔗 **구매자 측의 비정상 안전결제 링크 요구**")
 
             if pattern_non_face.search(clean_chat):
-                risk_score += 15
-                detected_patterns.append("🚪 **직거래 회피 (지방/출장 핑계) 및 택배 거래 강요**")
+                risk_score += 10
+                detected_patterns.append("🚪 **비대면 수령 및 선입금 무조건 고집**")
 
             if 10000 <= price <= 150000:
                 risk_score += 10
@@ -142,7 +141,7 @@ if mode == "🛒 구매자 시점 (내가 물건을 살 때)":
             else:
                 gauge_color = "#28A745"
 
-            st.subheader(f"판매자 위험도 점수: **{risk_score}점 / 100점**")
+            st.subheader(f"구매자 위험도 점수: **{risk_score}점 / 100점**")
             st.markdown(f"""
             <div style="background-color: #E0E0E0; border-radius: 12px; height: 24px; width: 100%; overflow: hidden; margin-bottom: 20px;">
                 <div style="background-color: {gauge_color}; width: {risk_score}%; height: 100%; border-radius: 12px; transition: width 0.6s ease-in-out;"></div>
@@ -150,39 +149,39 @@ if mode == "🛒 구매자 시점 (내가 물건을 살 때)":
             """, unsafe_allow_html=True)
 
             if detected_patterns:
-                st.markdown("### 🔍 감지된 판매자 사기 의심 패턴:")
+                st.markdown("### 🔍 감지된 구매자 사기 의심 패턴:")
                 for pattern in detected_patterns:
                     st.write(f"- {pattern}")
                 st.write("")
 
             if risk_score >= 65:
-                st.error("🚨 **[위험등급: 매우 위험] 결제를 중단하세요!**")
+                st.error("🚨 **[위험등급: 매우 위험] 거래를 거절하세요!**")
                 st.markdown("""
-                * **분석:** 판매자가 중고거래 피싱 사기의 전형적인 수법을 사용하고 있습니다.
-                * **경고:** 판매자가 보낸 URL 접속 또는 외부 메신저 입금 요구는 99% 사기입니다. 절대로 입금하지 마세요.
+                * **분석:** 입금 전 송장 선발송 요구나 외부 채널 이동 등 위험한 대화 패턴이 감지되었습니다.
+                * **경고:** 물품 발송 또는 송장 발행은 반드시 내 계좌로 입금이 완결된 것을 확인한 후 진행하세요.
                 """)
             elif risk_score >= 35:
-                st.warning("⚠️ **[위험등급: 주의] 판매자 신원 확인이 필요합니다.**")
+                st.warning("⚠️ **[위험등급: 주의] 신중한 입금 확인이 필요합니다.**")
                 st.markdown("""
-                * **분석:** 거래 대화 중 사기 의심 키워드가 감지되었습니다.
-                * **경고:** 입금 전 **더치트**나 **경찰청 사이버캅**에서 판매자의 계좌번호와 전화번호를 조회하세요.
+                * **분석:** 사기 의심 키워드가 일부 포함되어 있습니다.
+                * **경고:** 구매자가 정식 플랫폼 채팅창 내에서 거래를 진행하는지 확인하세요.
                 """)
             else:
                 st.success("✅ **[위험등급: 비교적 안전] 안전 거래 수칙을 준수하세요.**")
                 st.markdown("""
-                * **분석:** 전형적인 판매자 사기 대화 패턴이 감지되지 않았습니다.
-                * **경고:** 외부 링크 결제를 피하고 플랫폼 내부 정식 거래망만 이용하세요.
+                * **분석:** 전형적인 구매자 사기 패턴이 감지되지 않았습니다.
+                * **경고:** 항상 계좌 입금 내역을 직접 확인한 뒤 상품을 보내세요.
                 """)
 
 
 # ==============================================================================
-# 2. 판매자 시점 (사용자가 판매자 - 상대방 구매자의 대화 시뮬레이션)
+# 2. 구매자 시점 (내가 물건을 살 때 - 상대방 가상 판매자의 대화 시뮬레이션)
 # ==============================================================================
 else:
-    st.title("🏷️ 판매자용: 가상 구매자 사기 위험도 시뮬레이터")
+    st.title("🛒 구매자용: 가상 판매자 사기 위험도 시뮬레이터")
     st.markdown("""
-    사용자님이 **판매자**로서 $1,000\text{원} \sim 5,000\text{원}$ 상당의 소액 물품을 판매하는 상황입니다.  
-    가상의 구매자가 보내온 메시지를 바탕으로 **소액 거래 사기 위험도**를 모의 진단합니다.
+    사용자님이 **구매자**로서 1,000원 ~ 5,000원 상당의 소액 물품을 구매하려는 상황입니다.  
+    가상의 판매자가 보내온 메시지를 바탕으로 **판매자 사기 위험도**를 모의 진단합니다.
     """)
 
     st.divider()
@@ -192,74 +191,74 @@ else:
         st.session_state["sim_price"] = random.randint(1000, 5000)
 
     if "sim_chat" not in st.session_state:
-        st.session_state["sim_chat"] = "안녕하세요! 거래 잘 부탁드립니다. 혹시 직거래 가능할까요?"
+        st.session_state["sim_chat"] = "안녕하세요! 구매 가능하십니다. 직거래 원하시나요?"
 
-    # 가상 구매자 대화 풀 (사기형 vs 정상형)
-    scam_buyer_chats = [
-        "지금 바로 5000원 입금할 테니 편의점 택배 송장 먼저 뽑아서 사진 보내주시면 확인하고 입금해 드릴게요!",
-        "제가 알림이 잘 안 와서 카카오톡으로 진행하고 싶습니다. 카톡 ID: buyer_fast 로 톡 주세요!",
-        "제가 지금 출장 중이라 물건 문 앞에 둬주시면 확인 후 바로 계좌로 선입금해 드릴게요.",
-        "네이버페이 안전결제로 거래하고 싶은데 구매자용 링크 생성해서 보내주실 수 있나요?"
+    # 가상 판매자 대화 풀 (사기형 vs 정상형)
+    scam_seller_chats = [
+        "안녕하세요. 물건 지방이라 택배거래만 됩니다. 제가 네이버페이 안전결제 생성해서 링크 보내드릴 테니 접속해서 결제해 주세요. http://naverpay-safe.xyz",
+        "앱 알림이 잘 안 와서 그러는데 카카오톡으로 문의주세요! ID: fastpay99 오시면 상세 사진 보내드릴게요.",
+        "지금 바로 입금하시면 5분 안에 편의점 택배 송장 바로 뽑아드릴게요!",
+        "제가 지금 출장 중이라 비대면 택배만 가능합니다. 계좌 알려드릴 테니 선입금 부탁드려요."
     ]
 
-    normal_buyer_chats = [
-        "안녕하세요! 거래 잘 부탁드립니다. 혹시 어디서 직거래 가능하신가요?",
-        "안녕하세요 구매 희망합니다! 당근페이로 결제하면 될까요?",
-        "안녕하세요, 아직 판매 중인가요? 거래 가능한 시간 알려주시면 맞춰서 입금할게요!"
+    normal_seller_chats = [
+        "안녕하세요! 거래 가능합니다. 혹시 어디서 직거래 가능하신가요?",
+        "안녕하세요 구매 가능하십니다. 안전하게 당근페이로 결제해 주시면 됩니다!",
+        "안녕하세요, 오늘 저녁에 시간 맞춰주시면 직거래 또는 편의점 반값택배 가능합니다."
     ]
 
     # 가상 상황 새로고침 버튼
-    if st.button("🎲 새로운 가상 구매자 대화 불러오기", use_container_width=True):
+    if st.button("🎲 새로운 가상 판매자 대화 불러오기", use_container_width=True):
         st.session_state["sim_price"] = random.randint(1000, 5000)
-        is_scam_buyer = random.choice([True, False])
-        if is_scam_buyer:
-            st.session_state["sim_chat"] = random.choice(scam_buyer_chats)
+        is_scam_seller = random.choice([True, False])
+        if is_scam_seller:
+            st.session_state["sim_chat"] = random.choice(scam_seller_chats)
         else:
-            st.session_state["sim_chat"] = random.choice(normal_buyer_chats)
+            st.session_state["sim_chat"] = random.choice(normal_seller_chats)
 
     # 1. 가상 매칭 정보
-    st.header("1. 내가 올린 상품 정보")
+    st.header("1. 구매하려는 상품 정보")
     sim_col1, sim_col2 = st.columns(2)
 
     with sim_col1:
-        st.metric("판매 중인 물품 가격", f"{st.session_state['sim_price']:,} 원")
+        st.metric("구매 대상 물품 가격", f"{st.session_state['sim_price']:,} 원")
 
     with sim_col2:
         st.metric("거래 유형", "소액 상품 무작위 매칭")
 
-    # 2. 가상 구매자가 보낸 메시지
-    st.header("2. 구매자(상대방)가 보낸 대화")
-    st.info(f"💬 **구매자:** \"{st.session_state['sim_chat']}\"")
+    # 2. 가상 판매자가 보낸 메시지
+    st.header("2. 판매자(상대방)가 보낸 대화")
+    st.info(f"💬 **판매자:** \"{st.session_state['sim_chat']}\"")
 
     st.divider()
 
     # 3. 진단 결과 분석
-    st.header("3. 구매자 사기 위험도 종합 분석 결과")
+    st.header("3. 판매자 사기 위험도 종합 분석 결과")
 
     sim_chat_text = sanitize_text(st.session_state["sim_chat"])
     sim_risk_score = 0
     sim_reasons = []
 
-    pattern_messenger = re.compile(r"(카톡|카카오톡|오픈채팅|오픈톡|문자|라인|텔레그램|알림이\s*안|아이디|ID)", re.IGNORECASE)
     pattern_link = re.compile(r"(안전결제|안전거래|네이버페이|링크|URL|http|https)", re.IGNORECASE)
-    pattern_urgency = re.compile(r"(송장|편의점|선발송|택배\s*먼저)", re.IGNORECASE)
+    pattern_messenger = re.compile(r"(카톡|카카오톡|오픈채팅|오픈톡|문자|라인|텔레그램|알림이\s*안|아이디|ID)", re.IGNORECASE)
+    pattern_urgency = re.compile(r"(지금\s*바로|즉시|급하게|오늘만)", re.IGNORECASE)
     pattern_non_face = re.compile(r"(출장|지방|문\s*앞|비대면|선입금)", re.IGNORECASE)
 
-    if pattern_urgency.search(sim_chat_text):
-        sim_risk_score += 45
-        sim_reasons.append("📦 **입금 전 송장 우선 발송(선발송) 유도** (소액 물품 입금 먹튀 사기 가능성)")
-
     if pattern_link.search(sim_chat_text):
-        sim_risk_score += 40
-        sim_reasons.append("🔗 **안전결제 링크 요구** (판매자 개인정보/계좌 탈취 목적 피싱 가능성)")
+        sim_risk_score += 55
+        sim_reasons.append("🔗 **외부 웹 피싱/가짜 안전결제 링크 유도** (100% 사기 위험)")
 
     if pattern_messenger.search(sim_chat_text):
         sim_risk_score += 30
-        sim_reasons.append("📲 **앱 외부 메신저로 이동 요구** (플랫폼 신고 차단 회피 시도)")
+        sim_reasons.append("📲 **앱 외부 메신저 이동 유도** (플랫폼 보호 시스템 회피 시도)")
+
+    if pattern_urgency.search(sim_chat_text):
+        sim_risk_score += 20
+        sim_reasons.append("⏰ **즉시 입금 독촉 및 긴급 거래 연출**")
 
     if pattern_non_face.search(sim_chat_text):
         sim_risk_score += 20
-        sim_reasons.append("🚪 **비대면 수령 및 출장 핑계 요구**")
+        sim_reasons.append("🚪 **직거래 회피 및 비대면 택배거래 강요**")
 
     sim_risk_score = min(sim_risk_score, 100)
 
@@ -273,7 +272,7 @@ else:
     else:
         sim_gauge_color = "#28A745"
 
-    st.subheader(f"구매자 위험도 점수: **{sim_risk_score}점 / 100점**")
+    st.subheader(f"판매자 위험도 점수: **{sim_risk_score}점 / 100점**")
 
     st.markdown(f"""
     <div style="background-color: #E0E0E0; border-radius: 12px; height: 24px; width: 100%; overflow: hidden; margin-bottom: 20px;">
@@ -282,14 +281,14 @@ else:
     """, unsafe_allow_html=True)
 
     if sim_risk_score >= 40:
-        st.error("🚨 **[위험도 높음] 구매자의 요구 조건이 의심스럽습니다!**")
+        st.error("🚨 **[위험도 높음] 판매자의 대화 및 조건이 사기 패턴입니다!**")
         st.markdown(f"""
         * **감지된 의심 요소:** {', '.join(sim_reasons)}
-        * **판매자 경고 가이드:** {st.session_state['sim_price']:,}원 상당의 소액 상품일지라도 **"송장 먼저 뽑아주면 입금하겠다"**는 식의 거래 요구나 외부 채널 이동 요구는 100% 거부하세요. 반드시 대금 입금 확인 후 물품을 발송해야 합니다.
+        * **구매자 경고 가이드:** {st.session_state['sim_price']:,}원 상당의 소액 거래라 하더라도 외부 링크 결제 접속이나 카카오톡 유도는 피싱 사기일 위험이 큽니다. 입금을 중단하고 거래를 취소하세요.
         """)
     else:
-        st.success("✅ **[위험도 낮음] 구매자의 정상적인 거래 대화 패턴입니다.**")
+        st.success("✅ **[위험도 낮음] 판매자의 정상적인 거래 대화 패턴입니다.**")
         st.markdown(f"""
-        * **분석 내용:** 송장 선발송 강요, 외부 결제 링크 요구, 외부 메신저 유도 등의 이상 패턴이 발견되지 않았습니다.
-        * **판매자 가이드:** 정해진 안심 결제 수단 및 채팅창 내부 안내에 따라 안전하게 거래를 진행하세요.
+        * **분석 내용:** 외부 메신저 유도, 피싱 링크 전송, 직거래 거부 등의 의심 패턴이 감지되지 않았습니다.
+        * **구매자 가이드:** 정식 앱 내부 채팅창과 안전한 결제 시스템을 이용해 거래를 진행하세요.
         """)
