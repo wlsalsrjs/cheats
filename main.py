@@ -38,10 +38,30 @@ with col2:
         help="중고거래 경험이 적을수록 경각심 가이드를 강화해 드립니다."
     )
 
-# 2. 대화 내용 입력
+# 2. 대화 내용 입력 및 샘플 테스트
 st.header("2. 상대방과의 대화 내용 입력")
+
+if "chat_text" not in st.session_state:
+    st.session_state["chat_text"] = ""
+
+st.write("💡 **테스트용 샘플 대화 불러오기:**")
+sample_col1, sample_col2, sample_col3 = st.columns(3)
+
+with sample_col1:
+    if st.button("🚨 가짜 안전결제 사기", use_container_width=True):
+        st.session_state["chat_text"] = "안녕하세요. 물건 지방이라 택배거래만 됩니다. 제가 네이버페이 안전결제 생성해서 링크 보내드릴 테니 접속하셔서 결제 진행해 주세요. http://naverpay-safety.com"
+
+with sample_col2:
+    if st.button("📲 외부 메신저 유도", use_container_width=True):
+        st.session_state["chat_text"] = "앱 알림이 잘 안 와서 그러는데 카톡으로 문의주세요. 카톡 ID: scammer123 입니다. 오시면 사진 더 보내드릴게요."
+
+with sample_col3:
+    if st.button("✅ 정상 거래 예시", use_container_width=True):
+        st.session_state["chat_text"] = "안녕하세요! 아직 구매 가능한가요? 내일 오후 3시에 강남역 4번 출구 쪽에서 직거래 가능할까요? 물건 직접 보고 입금드릴게요."
+
 user_chat = st.text_area(
     "카톡, 문자, 당근챗 등에서 상대방과 주고받은 대화를 복사해서 붙여넣으세요:",
+    value=st.session_state["chat_text"],
     height=200,
     placeholder="예시:\n- 앱 알림이 안 와서 카톡으로 문의주세요 ID: abc1234\n- 지금 바로 입금하시면 편의점 택배로 송장 바로 뽑아드릴게요.\n- 안전거래 링크 보내드릴 테니 접속해서 결제하시면 됩니다."
 )
@@ -108,9 +128,29 @@ if st.button("대화 분석 및 위험도 진단하기", type="primary", use_con
         # 점수 캡핑 (최대 100점)
         risk_score = min(risk_score, 100)
 
-        # --- 결과 출력 ---
+        # --- 점수 구간별 동적 색상 지정 (연두 ➔ 노랑 ➔ 주황 ➔ 빨강) ---
+        if risk_score >= 70:
+            gauge_color = "#FF2B2B"  # 진한 빨강 (매우 위험)
+            bg_color = "#FFEBEB"
+        elif risk_score >= 45:
+            gauge_color = "#FF8C00"  # 주황 (경고)
+            bg_color = "#FFF5E6"
+        elif risk_score >= 25:
+            gauge_color = "#FFC107"  # 노랑 (주의)
+            bg_color = "#FFFDE7"
+        else:
+            gauge_color = "#28A745"  # 연두/초록 (안전)
+            bg_color = "#E8F5E9"
+
+        # --- 커스텀 HTML 프로그래스 바 및 점수 출력 ---
         st.subheader(f"위험도 점수: **{risk_score}점 / 100점**")
-        st.progress(risk_score / 100)
+        
+        # HTML/CSS 기반 실시간 색상 변경 프로그래스 바
+        st.markdown(f"""
+        <div style="background-color: #E0E0E0; border-radius: 12px; height: 24px; width: 100%; overflow: hidden; margin-bottom: 20px;">
+            <div style="background-color: {gauge_color}; width: {risk_score}%; height: 100%; border-radius: 12px; transition: width 0.6s ease-in-out;"></div>
+        </div>
+        """, unsafe_allow_html=True)
 
         # 감지된 패턴 표시
         if detected_patterns:
